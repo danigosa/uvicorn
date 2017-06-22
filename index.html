@@ -97,7 +97,9 @@
             <li><a href="#quickstart">Quickstart</a></li>
         </ul>
         </li>
-        <li><a href="#messaging-interface">Messaging interface</a>
+        <li><a href="#messaging-interface">Messaging interface</a><ul>
+            <li><a href="#example">Example</a></li>
+        </ul>
         </li>
         <li><a href="#http">HTTP</a><ul>
             <li><a href="#requests-responses">Requests &amp; responses</a></li>
@@ -112,7 +114,7 @@
         </li>
         <li><a href="#broadcast">Broadcast</a><ul>
             <li><a href="#commands">Commands</a></li>
-            <li><a href="#example">Example</a></li>
+            <li><a href="#example_1">Example</a></li>
         </ul>
         </li>
         <li><a href="#adapters">Adapters</a><ul>
@@ -123,8 +125,10 @@
 </ul>
 
 <h1 id="introduction">Introduction</h1>
-<p>Uvicorn is intended to be the basis for providing Python 3 with a simple
-interface on which to build asyncio web frameworks. It provides the following:</p>
+<p>Python currently lacks a minimal low-level server/application interface for
+<code>asyncio</code> frameworks. Filling this gap means we'd be able to start building
+a common set of tooling usable across all asyncio frameworks.</p>
+<p>Uvicorn is an attempt to resolve this, by providing:</p>
 <ul>
 <li>A lightning-fast asyncio server implementation, using <a href="https://github.com/MagicStack/uvloop">uvloop</a> and <a href="https://github.com/MagicStack/httptools">httptools</a>.</li>
 <li>A minimal application interface, based on <a href="http://channels.readthedocs.io/en/stable/asgi.html">ASGI</a>.</li>
@@ -153,7 +157,7 @@ interface on which to build asyncio web frameworks. It provides the following:</
 </code></pre>
 
 <h1 id="messaging-interface">Messaging interface</h1>
-<p>Uvicorn introduces a messaging interface broadly based on ASGI...</p>
+<p>Uvicorn introduces a messaging interface broadly based on <a href="http://channels.readthedocs.io/en/stable/asgi.html">ASGI</a>...</p>
 <p>The application should expose a coroutine callable which takes two arguments:</p>
 <ul>
 <li><code>message</code> is an <a href="http://channels.readthedocs.io/en/stable/asgi/www.html#http-websocket-asgi-message-format-draft-spec">ASGI message</a>.  (But see below for ammendments.)</li>
@@ -171,6 +175,43 @@ interface on which to build asyncio web frameworks. It provides the following:</
 <li>Messages do not include channel names, such as <code>reply_channel</code> or <code>body_channel</code>,
   instead the <code>channels</code> dictionary presents the available channels.</li>
 </ul>
+<h2 id="example">Example</h2>
+<p>An incoming HTTP request might be represented with the following <code>message</code>
+and <code>channels</code> information:</p>
+<p><strong>message</strong>:</p>
+<pre><code class="python">{
+    'channel': 'http.request',
+    'scheme': 'http',
+    'root_path': '',
+    'server': ('127.0.0.1', 8000),
+    'http_version': '1.1',
+    'method': 'GET',
+    'path': '/',
+    'headers': [
+        [b'host', b'127.0.0.1:8000'],
+        [b'user-agent', b'curl/7.51.0'],
+        [b'accept', b'*/*']
+    ]
+}
+</code></pre>
+
+<p><strong>channels</strong>:</p>
+<pre><code class="python">{
+    'reply': &lt;ReplyChannel&gt;
+}
+</code></pre>
+
+<p>In order to respond, the application would <code>send()</code> an HTTP response to
+the reply channel, for instance:</p>
+<pre><code class="python">await channels['reply'].send({
+    'status': 200,
+    'headers': [
+        [b'content-type', b'text/plain'],
+    ],
+    'content': b'Hello, world'
+})
+</code></pre>
+
 <h1 id="http">HTTP</h1>
 <p>The format for HTTP request and response messages is described in <a href="http://channels.readthedocs.io/en/stable/asgi/www.html#http">the ASGI documentation</a>.</p>
 <h2 id="requests-responses">Requests &amp; responses</h2>
@@ -395,7 +436,7 @@ which accepts the following command messages:</p>
 </code></pre>
 
 <p>Send a message to all channels in the given group.</p>
-<h2 id="example">Example</h2>
+<h2 id="example_1">Example</h2>
 <p>Let's add broadcast functionality to our previous chat server example...</p>
 <pre><code class="python">from uvicorn.broadcast import BroadcastMiddleware
 
