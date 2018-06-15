@@ -7,3 +7,7 @@ websockets
 pytest
 pytest-cov
 requests
+
+# Publishing
+twine
+wheel

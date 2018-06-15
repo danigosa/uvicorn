@@ -1,4 +1,8 @@
 #!/bin/sh -ex
-
 python3 -m venv venv
+ln -s /root/.pip venv/
+ln -s /root/.pypirc venv/
+ln -s /root/.ssh venv/
+venv/bin/pip install --upgrade pip
 venv/bin/pip install -r requirements.txt
+
